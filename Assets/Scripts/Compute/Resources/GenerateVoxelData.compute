@@ -181,10 +181,17 @@ float4 snoise_grad(float3 v)
 int SizeX, SizeY, SizeZ;
 int x, y, z;
 
-[numthreads(8,8,8)]
+float sdSphere(float3 p, float s)
+{
+	return length(p) - s;
+}
+
+[numthreads(1,1,1)]
 void GenerateVoxelData (uint3 id : SV_DispatchThreadID)
 {
     // TODO: insert actual code here!
+	if (id.x + (id.y * SizeX) + (id.z * SizeX * SizeY) < (SizeX * SizeY * SizeZ)) {
+		VoxelData[id.x + (id.y * SizeX) + (id.z * SizeX * SizeY)] = sdSphere(id, 10);//id.x * id.x +  id.y * id.y + id.z * id.z - 64;//snoise((id / 32) + float3(x + 0.1f, y + 0.1f, z + 0.1f));
 
-	VoxelData[id.x + id.y * SizeX + id.z * SizeX * SizeY] = snoise((id/32) + float3(x + 0.1f, y + 0.1f, z + 0.1f));
+	}
 }

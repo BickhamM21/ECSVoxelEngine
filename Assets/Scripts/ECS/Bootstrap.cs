@@ -48,8 +48,8 @@ public class Bootstrap : MonoBehaviour
             ChunkInfo chunkInfo = new ChunkInfo
             {
                 chunkProgress = 0,
-                size = int3(64),
-                pos = int3(x * 64,y * 64,z * 64)
+                size = int3(16),
+                pos = int3(x * 16,y * 16,z * 16)
 
 
             };

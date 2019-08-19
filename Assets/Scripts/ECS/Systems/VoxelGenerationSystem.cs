@@ -31,7 +31,7 @@ public class VoxelGenerationSystem : ComponentSystem
         chunksQuery = World.Active.EntityManager.CreateEntityQuery(typeof(ChunkInfo));
         chunkManagerQuery = World.Active.EntityManager.CreateEntityQuery(typeof(VoxelData), typeof(ChunkManagerInfo));
 
-        voxelBuffer = new ComputeBuffer(65 * 65 * 65, sizeof(float));
+        voxelBuffer = new ComputeBuffer(17 * 17 * 17, sizeof(float));
         GenerateVoxelDataKernel = voxelDataGenerator.FindKernel("GenerateVoxelData");
         voxelDataGenerator.SetBuffer(GenerateVoxelDataKernel, "VoxelData", voxelBuffer);
 
@@ -80,9 +80,9 @@ public class VoxelGenerationSystem : ComponentSystem
 
                 ChunkInfo chunkInfo = World.Active.EntityManager.GetComponentData<ChunkInfo>(chunk);
 
-                voxelDataGenerator.SetInt("SizeX", chunkInfo.size.x);
-                voxelDataGenerator.SetInt("SizeY", chunkInfo.size.y);
-                voxelDataGenerator.SetInt("SizeZ", chunkInfo.size.z);
+                voxelDataGenerator.SetInt("SizeX", chunkInfo.size.x + 1);
+                voxelDataGenerator.SetInt("SizeY", chunkInfo.size.y + 1);
+                voxelDataGenerator.SetInt("SizeZ", chunkInfo.size.z + 1);
 
                 voxelDataGenerator.SetInt("x", chunkInfo.pos.x);
                 voxelDataGenerator.SetInt("y", chunkInfo.pos.y);
@@ -90,7 +90,7 @@ public class VoxelGenerationSystem : ComponentSystem
 
 
 
-                voxelDataGenerator.Dispatch(GenerateVoxelDataKernel, chunkInfo.size.x / 8, chunkInfo.size.y / 8, chunkInfo.size.z / 8);
+                voxelDataGenerator.Dispatch(GenerateVoxelDataKernel, (int)math.ceil((chunkInfo.size.x + 1)/ 1), (int)math.ceil((chunkInfo.size.y + 1)/ 1), (int)math.ceil((chunkInfo.size.z + 1) / 1));
                 hasDispatched = true;
                 request = AsyncGPUReadback.Request(voxelBuffer);
 
@@ -100,15 +100,23 @@ public class VoxelGenerationSystem : ComponentSystem
 
             if (request.done)
             {
-                hasDispatched = false;
 
+                if(request.hasError == true)
+                {
+                    throw new System.NotImplementedException();
+                }
+
+                hasDispatched = false;
 
                 voxelData = request.GetData<float>();
 
                 DynamicBuffer<float> voxelDynamicBuffer = World.Active.EntityManager.GetBuffer<VoxelData>(chunkManagerEntity).Reinterpret<float>();
                 voxelDynamicBuffer.CopyFrom(voxelData);
 
-                Debug.Log(World.Active.EntityManager.GetBuffer<VoxelData>(chunkManagerEntity).Reinterpret<float>()[0]);
+                for(int i = 0; i < 17 * 17 * 17; i++)
+                {
+                    Debug.Log(voxelData[i]);
+                }
                 //World.Active.EntityManager.SetComponentData<VoxelData>(chunkManagerEntity, voxelDynamicBuffer.Reinterpret<VoxelData>());
 
                 ChunkInfo chunkInfo = World.Active.EntityManager.GetComponentData<ChunkInfo>(chunks[chunkID]);
@@ -120,7 +128,6 @@ public class VoxelGenerationSystem : ComponentSystem
 
                 managerInfo.status = 1;
                 World.Active.EntityManager.SetComponentData(chunkManagerEntity, managerInfo);
-
 
 
 
